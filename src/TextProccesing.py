@@ -14,10 +14,43 @@ class Extractor:
         return self.ascii_word_regex.findall(text)
 
 
+class Processor:
+    """
 
-class TokenizerBase:
+    Main class for Text Proccesing
     
-    def __init__(self, records, binary_value, next_pipline = None):
+    """
+    
+    def __init__(self, instance):
+        
+        if instance is None:
+            self._instance = instance
+        elif not isinstance(instance, Processor):
+            raise TypeError(f"incorrect processor usage {instance}")
+        else:
+            self._instance = instance
+            self.records = instance.records
+        
+    def process_all(self):
+
+        """
+        Start all class process
+        
+        """
+        if self._instance is None:
+            
+            return self.process()
+        else:
+            ## Start sub class processing
+            self.records = self._instance.process_all()
+            return self.process()    
+    
+    def process(self):
+        raise NotImplementedError("incorrect processor usage")
+
+class TokenizerBase(Processor):
+    
+    def __init__(self, records, binary_value, next_pipeline = None):
         """
         args:
             entiment -> name dataframe(negative, neural, positive)
@@ -26,8 +59,10 @@ class TokenizerBase:
         """
         self.records = records
         self.binary_value = binary_value
+        self.next_pipeline = next_pipeline
+    
         #self.sentiment = sentiment#sentiments.get(sentiment) #Example: Sentiment(type='negative', ordinal=-1)
-        #super().__init__(next_pipeline)
+        super().__init__(next_pipeline)
 
     def count_tokens(self, text):
         """
@@ -51,7 +86,6 @@ class TokenizerBase:
         final_rows = [self.format_to_row(wcount) for wcount in wc] ## Ставит бинарное значение каждомо словарю (-1, 0, 1) (negative, neutral, positive)
         return final_rows
     
-
 
 
 class PreProcessor:
@@ -111,9 +145,9 @@ if __name__ == "__main__":
 
 
 
-    neg_token = TokenizerBase(records=negative_tweets, binary_value = -1).process()
-    pos_token = TokenizerBase(records=positive_tweets, binary_value = 1).process() 
-    neu_token = TokenizerBase(records=neutral_tweets, binary_value = 0).process()
+    neg_token = TokenizerBase(records=negative_tweets, binary_value = -1).process_all()
+    pos_token = TokenizerBase(records=positive_tweets, binary_value = 1).process_all()
+    neu_token = TokenizerBase(records=neutral_tweets, binary_value = 0).process_all()
 
     print(neg_token[0])
     all_df = neg_token + pos_token + neu_token
